@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Social “Me”dia</title>
+
+    <style>
+        :root { 
+            --bg-color: #000; 
+            --accent: #00ffcc; 
+            --text-main: #ffffff;
+            --text-dim: #a8a8a8;
+            --border: #1a1a1a;
+            --heart-red: #ff3040;
+            --nav-bg: rgba(0, 0, 0, 0.9);
+            --modal-bg: rgba(15, 15, 15, 0.98);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background-color: var(--bg-color); 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        nav {
+            position: fixed; top: 0; width: 100%; height: 60px;
+            background: var(--nav-bg); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: blur(20px);
+        }
+        .nav-content { 
+            width: 100%; max-width: 800px; 
+            display: flex; justify-content: space-between; 
+            padding: 0 20px; align-items: center;
+        }
+        
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+        .logo { font-family: 'Courier New', monospace; font-weight: bold; font-size: 18px; letter-spacing: 1px; color: var(--text-main); }
+        
+        .lang-select {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-dim); font-size: 11px; padding: 4px 6px;
+            border-radius: 4px; outline: none; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-select:hover { border-color: var(--accent); color: white; }
+
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+
+        .create-btn {
+            background: var(--accent); color: #000;
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            border: none; transition: transform 0.1s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .create-btn:active { transform: scale(0.95); opacity: 0.9; }
+
+        main { margin-top: 60px; width: 100%; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; }
+
+        .post {
+            width: 100%; max-width: 500px;
+            background: var(--bg-color);
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .post-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header-left { display: flex; align-items: center; }
+
+        .profile-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+        .profile-link:hover {
+            opacity: 0.8;
+        }
+
+        .avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: linear-gradient(45deg, #222, #444);
+            margin-right: 12px; border: 1px solid var(--border);
+            object-fit: cover;
+            display: block;
+        }
+        .username { font-weight: 600; font-size: 14px; margin-right: 10px; }
+        
+        .follow-btn { font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; transition: 0.2s; padding: 4px 8px; }
+        .follow-btn.following { color: var(--text-dim); }
+
+        .media-box { 
+            position: relative; 
+            width: 100%; 
+            aspect-ratio: 1 / 1;
+            background: #050505; 
+            overflow: hidden; 
+            cursor: pointer;
+        }
+        
+        .feed-video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            display: block; 
+            pointer-events: auto;
+        }
+
+        .video-controls {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .video-controls:active {
+            transform: scale(0.9);
+        }
+        .video-controls svg {
+            width: 16px;
+            height: 16px;
+            fill: #ffffff;
+        }
+
+        .video-error-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #111;
+            display: none; 
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-dim);
+            z-index: 2;
+        }
+        .video-error-overlay p {
+            font-size: 12px;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        .video-error-overlay code {
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent);
+            font-family: monospace;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .pop-heart {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            pointer-events: none; z-index: 10; filter: drop-shadow(0 0 15px rgba(255,48,64,0.4));
+        }
+        .pop-heart.animate { animation: heart-pop 0.8s ease-out; }
+        @keyframes heart-pop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            30% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.9; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .post-footer { padding: 12px 16px; }
+        .action-btns { display: flex; gap: 18px; margin-bottom: 8px; }
+        .btn-svg { cursor: pointer; transition: transform 0.1s; background: none; border: none; color: white; padding: 0; }
+        .btn-svg:active { transform: scale(0.8); }
+        .btn-svg.liked { color: var(--heart-red); }
+
+        .stats { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+        .caption { font-size: 14px; line-height: 1.5; margin-bottom: 10px; }
+        .caption b { margin-right: 8px; }
+
+        .comments-area { margin-top: 5px; }
+        .comment-row { font-size: 14px; margin-bottom: 4px; }
+        .comment-row b.user-label { margin-right: 6px; }
+
+        .comment-bar { display: flex; align-items: center; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 12px; }
+        .comment-input { background: transparent; border: none; color: white; flex: 1; font-size: 14px; outline: none; }
+        .post-action { color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; opacity: 0.4; pointer-events: none; }
+        .post-action.active { opacity: 1; pointer-events: auto; }
+
+        #shareModal, #echoModal, #conceptModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(15px);
+        }
+       .modal-content {
+    background: var(--modal-bg);
+    width: 90%;
+    max-width: 420px;
+    padding: 30px 20px;
+    border-radius: 32px;
+    border: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+#conceptModal .modal-content {
+    max-width: 700px;
+}
+
+        .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 24px; color: var(--text-main); letter-spacing: 1px; }
+        
+        .share-actions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 5px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .action-row-btn {
+            background: #111;
+            border: 1px solid var(--border);
+            padding: 14px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: left;
+        }
+        .action-row-btn:hover {
+            border-color: var(--accent);
+            background: #161616;
+            color: var(--accent);
+        }
+        .action-row-btn:active {
+            transform: scale(0.98);
+        }
+        .action-row-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+        .echo-content { padding: 30px 20px; color: var(--text-main); }
+        .echo-quote {
+            font-size: 20px; font-weight: 300; line-height: 1.6; margin-bottom: 25px;
+            font-style: italic; color: var(--accent); text-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+        .echo-author { font-size: 13px; color: var(--text-dim); letter-spacing: 3px; }
+
+
+.concept-body {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-dim);
+    text-align: left;
+    margin-bottom: 25px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.concept-body h3 {
+    color: var(--accent);
+    margin: 20px 0 12px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+
+.concept-body p {
+    margin-bottom: 14px;
+}
+
+        .concept-body::-webkit-scrollbar { width: 4px; }
+        .concept-body::-webkit-scrollbar-track { background: #0c0c0c; }
+        .concept-body::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+        .close-echo {
+            margin-top: 15px; background: transparent; border: 1px solid var(--border);
+            color: var(--text-dim); padding: 10px 20px; border-radius: 30px;
+            cursor: pointer; font-size: 12px; transition: 0.3s;
+            letter-spacing: 1px;
+            width: 100%;
+        }
+        .close-echo:hover { border-color: var(--accent); color: var(--text-main); }
+
+        .icon-path { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+        .toast {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 255, 204, 0.95);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 13px;
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-content">
+            <div class="nav-left">
+                <div class="logo">Social “Me”dia: The Selected Self</div>
+                <select class="lang-select" id="langSwitcher">
+                    <option value="en">EN</option>
+                    <option value="zh">ZH</option>
+                    <option value="it">IT</option>
+                </select>
+            </div>
+            <div class="nav-right">
+                <div id="aboutUsNav" style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-dim); transition: 0.2s; margin-left: 10px;">About Us</div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="feed-root"></main>
+
+    <div id="shareModal">
+        <div class="modal-content">
+            <div class="modal-title" id="shareTitle">Share to Virtual Sphere</div>
+            
+            <div class="share-actions-list" style="border-top: none;">
+                <button class="action-row-btn" id="copyLinkBtn">
+                    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span id="copyLinkTxt">Copy Link</span>
+                </button>
+                <button class="action-row-btn" id="conceptBtn">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span id="conceptBtnTxt">Project Concept</span>
+                </button>
+                <button class="action-row-btn" id="soulEchoBtn">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <span id="soulEchoTxt">Discover Soul Echo</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="conceptModal">
+        <div class="modal-content echo-content">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent); margin: 0 auto 15px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div class="modal-title" id="conceptTitle">Project Concept</div>
+            <div class="concept-body" id="conceptBody">Concept statement placeholder</div>
+            <button class="close-echo" id="closeConceptBtn" onclick="document.getElementById('conceptModal').style.display='none'">RETURN</button>
+        </div>
+    </div>
+
+    <div id="echoModal">
+        <div class="modal-content echo-content">
+            <div class="echo-quote" id="echoQuote">"The privilege of a lifetime is to become who you truly are."</div>
+            <div class="echo-author" id="echoAuthor">— CARL JUNG</div>
+            <button class="close-echo" id="closeEchoBtn" onclick="document.getElementById('echoModal').style.display='none'">RETURN TO FEED</button>
+        </div>
+    </div>
+
+    <div id="toastNotification" class="toast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="toastMsg">Link copied!</span>
+    </div>
+
+        <script>
+  
+const i18n = {
+    en: {
+        create: "Create",
+        follow: "Follow",
+        following: "Following",
+        likes: "likes",
+        commentPlaceholder: "Add a comment...",
+        post: "Post",
+        you: "You",
+
+        shareTitle: "Share to Virtual Sphere",
+        friend: "Friend",
+        family: "Family",
+        others: "Others",
+
+        echoQuote: "The privilege of a lifetime is to become who you truly are.",
+        echoAuthor: "— CARL JUNG",
+        returnBtn: "RETURN TO FEED",
+
+        errorTitle: "Video Not Found",
+        errorGuide: "Please make sure your files are correctly linked in the local folder!",
+
+        copyLinkTxt: "Copy Link",
+        conceptBtnTxt: "About Us",
+        soulEchoTxt: "Discover Soul Echo",
+
+        conceptTitle: "ABOUT US",
+        aboutUs: "About Us",
+
+        conceptBody: `
+<h3>Concept</h3>
+
+<p>
+This project uses a website as its medium to investigate the construction of performative identities within social media environments.
+The images displayed on the platform originate from photographs that we routinely publish online. Although they appear natural and authentic, they are carefully selected, edited, filtered, and aesthetically enhanced representations of the self.
+</p>
+
+<p>
+Behind this sense of naturalness lies a series of invisible operations: selection, modification, filtering, and the constant control of visual effects. As a result, online identity cannot be understood as stable or entirely genuine, but rather as an ongoing process of production and adjustment. It is a continuously evolving virtual self, constructed through countless subtle decisions and technical interventions.
+</p>
+
+<p>
+Rather than merely presenting these images, this project seeks to expose the mechanisms behind their creation, highlighting the tension between the image that is displayed and the reality that remains concealed.
+</p>
+
+<h3>Interaction</h3>
+
+<p>
+The project adopts the interface structure of a social media platform. Upon entering the website, viewers encounter a feed composed of numerous polished images. These images do not exist independently; instead, they appear as fragmented layers that cover real human faces.
+</p>
+
+<p>
+Through facial tracking technology, selected and enhanced images are precisely mapped onto facial areas, creating a visual condition in which virtual representations overwrite the physical body. The images function simultaneously as content and as a mechanism of concealment, repeatedly reorganising and overlaying authentic appearance, allowing the virtual self to replace or interfere with direct perceptions of reality.
+</p>
+
+<p>
+At the same time, users witness the process through which these images are manipulated: selecting, dragging, adjusting, and replacing visual elements. These actions simulate the continuous editing and control involved in the construction of self-image on social media platforms.
+</p>
+
+<p>
+The viewer is therefore no longer simply observing a finished outcome, but is immersed in an unfolding process, witnessing how a virtual identity is gradually assembled and how it increasingly obscures what is real. Functions such as liking and commenting remain available, yet these interactions become more than responses to content: they actively participate in and reinforce the entire mechanism of identity construction.
+</p>
+
+<h3>Meaning</h3>
+
+<p>
+By deconstructing polished photographs into pixels, this project aims to reveal the invisible processes underlying online identity. The self presented on social media is not naturally occurring, but rather the result of repeated acts of editing, selection, and refinement.
+</p>
+
+<p>
+Pixels function both as technical units and as metaphors for the time, labour, and psychological pressure invested in maintaining digital personas. As viewers encounter these enlarged pixels, they are invited to recognise that seemingly perfect online identities are supported by countless fragmented and often overlooked efforts.
+</p>
+
+<p>
+Ultimately, the project encourages critical reflection on the relationship between authenticity and performance, while questioning how digital technologies reshape contemporary understandings of identity.
+</p>
+`,
+        copySuccess: "Post link copied to clipboard!"
+    },
+
+    zh: {
+        create: "发布",
+        follow: "关注",
+        following: "已关注",
+        likes: "次赞",
+        commentPlaceholder: "添加评论...",
+        post: "发布",
+        you: "你",
+
+        shareTitle: "分享至虚构场域",
+        friend: "朋友",
+        family: "家人",
+        others: "其他",
+
+        echoQuote: "人一生中最大的特权，就是成为真正的自己。",
+        echoAuthor: "— 荣格",
+        returnBtn: "返回信息流",
+
+        errorTitle: "视频未找到",
+        errorGuide: "请确保所需素材与视频文件和 index.html 存储在相同目录下！",
+
+        copyLinkTxt: "复制链接",
+        conceptBtnTxt: "关于项目",
+        soulEchoTxt: "探索灵魂回响",
+
+        conceptTitle: "ABOUT US",
+        aboutUs: "关于项目",
+
+        conceptBody: `
+<h3>项目概念（Concept）</h3>
+
+<p>
+本项目以网站作为媒介，探讨社交媒体中“表演性身份”的建构过程。网站中的图像来源于我们日常在社交媒体上发布的照片：它们经过筛选、修饰与美化，看似自然、真实，实则是对自我形象的精心建构与呈现。
+</p>
+
+<p>
+这种“自然感”背后，隐藏着大量不可见的操作，例如选择、编辑、滤镜以及对视觉效果的控制。因此，网络中的身份并非一个稳定或真实的存在，而是一种持续被生产、被调整的结果。它由无数细微的决策与技术操作共同构成，是一种不断变化的、被建构出来的“虚拟自我”。
+</p>
+
+<p>
+本项目并不只是呈现这些图像，而是试图揭示其背后的机制，指向“被展示的形象”与“被隐藏的真实”之间的张力关系。
+</p>
+
+<h3>交互方式（Interaction）</h3>
+
+<p>
+本项目以一个仿社交媒体平台为界面结构。在网页中，用户首先看到的是由大量精美照片构成的内容流。这些图像并非独立存在，而是以碎片化的形式覆盖在人物的真实面部之上。
+</p>
+
+<p>
+系统通过人脸捕捉技术，将这些经过筛选与修饰的图像精准地贴合在面部区域，形成一种“虚拟形象覆盖真实身体”的视觉状态。这些精美照片既是展示内容，同时也是一种遮蔽机制——它们不断重组、叠加在真实面貌之上，使“虚拟自我”取代或干扰对真实的直接感知。
+</p>
+
+<p>
+与此同时，用户可以看到这些图像被“操作”的过程：包括选择、拖动、调整、替换等行为，模拟个体在发布社交媒体内容时对自我形象的不断修饰与控制。
+</p>
+
+<p>
+观者不再只是浏览一个已经完成的结果，而是被置于一个正在发生的过程之中——他们目睹“虚拟形象”如何一步步被建构出来，并如何逐渐覆盖真实。用户依然可以进行点赞与评论等互动，但这些行为此时不再只是对图像的反馈，而是对这一整套建构过程的参与与强化。
+</p>
+
+<h3>概念意义（Meaning）</h3>
+
+<p>
+通过将精美照片解构为像素，本项目试图揭示网络身份背后的隐形过程。社交媒体中的自我并非自然呈现，而是一种经过反复加工、编辑和选择的结果。
+</p>
+
+<p>
+像素既代表技术单位，也象征个体在塑造网络形象时所投入的时间、精力和心理压力。观者在不断放大像素的过程中，逐渐意识到：所谓“完美”的网络形象，其实是由无数被忽略的、碎片化的努力所支撑的。
+</p>
+
+<p>
+本项目希望引发观者对真实性与表演性之间关系的反思，以及对数字技术如何重塑身份认知的批判性思考。
+</p>
+`,
+        copySuccess: "帖子分享链接已复制到剪贴板！"
+    },
+
+    it: {
+        create: "Crea",
+        follow: "Segui",
+        following: "Seguito",
+        likes: "mi piace",
+        commentPlaceholder: "Aggiungi un commento...",
+        post: "Pubblica",
+        you: "Tu",
+
+        shareTitle: "Condividi nella Sfera Virtuale",
+        friend: "Amici",
+        family: "Famiglia",
+        others: "Altro",
+
+        echoQuote: "Il privilegio di una vita è diventare chi sei veramente.",
+        echoAuthor: "— CARL JUNG",
+        returnBtn: "TORNA AL FEED",
+
+        errorTitle: "Video Non Trovato",
+        errorGuide: "Assicurati che i file video siano nella stessa cartella di index.html!",
+
+        copyLinkTxt: "Copia Link",
+        conceptBtnTxt: "Chi Siamo",
+        soulEchoTxt: "Scopri l'Eco dell'Anima",
+
+        conceptTitle: "CHI SIAMO",
+        aboutUs: "Chi siamo",
+
+        conceptBody: `
+<h3>Concetto</h3>
+
+<p>
+Questo progetto utilizza il sito web come mezzo per esplorare il processo di costruzione delle identità performative nei social media. Le immagini presenti sulla piattaforma derivano dalle fotografie che pubblichiamo quotidianamente online: immagini selezionate, modificate e abbellite che, pur apparendo spontanee e autentiche, rappresentano in realtà una costruzione accurata del sé.
+</p>
+
+<p>
+Dietro questa apparente naturalezza si nascondono numerose operazioni invisibili, come la scelta delle immagini, l'editing, l'uso dei filtri e il controllo degli effetti visivi. L'identità digitale non è quindi una presenza stabile o autentica, ma il risultato di un processo continuo di produzione e ridefinizione.
+</p>
+
+<p>
+Il progetto non si limita a mostrare queste immagini, ma cerca di rivelarne i meccanismi nascosti, evidenziando la tensione tra ciò che viene mostrato e ciò che rimane invisibile.
+</p>
+
+<h3>Interazione</h3>
+
+<p>
+L'opera assume la struttura di una piattaforma social. All'interno del sito, l'utente si confronta con un flusso di immagini curate che si sovrappongono ai volti reali attraverso la frammentazione visiva.
+</p>
+
+<p>
+Grazie alla tecnologia di riconoscimento facciale, queste immagini vengono applicate con precisione alle aree del volto, creando una condizione in cui la rappresentazione virtuale sostituisce progressivamente il corpo reale. Le immagini diventano contemporaneamente contenuto e dispositivo di occultamento.
+</p>
+
+<p>
+L'utente può inoltre osservare il processo di costruzione dell'immagine: selezione, spostamento, regolazione e sostituzione degli elementi visivi. Queste azioni simulano le strategie attraverso cui gli individui modellano la propria identità online.
+</p>
+
+<p>
+Lo spettatore non osserva semplicemente un risultato finale, ma assiste a un processo in divenire, vedendo come l'identità virtuale venga costruita e come finisca per oscurare la percezione del reale. Like e commenti rimangono possibili, ma diventano parte integrante del meccanismo di costruzione identitaria.
+</p>
+
+<h3>Significato</h3>
+
+<p>
+Attraverso la scomposizione delle immagini in pixel, il progetto rende visibili i processi nascosti alla base dell'identità digitale. Il sé mostrato sui social media non è una manifestazione spontanea, bensì il risultato di continue operazioni di selezione e modifica.
+</p>
+
+<p>
+I pixel rappresentano sia unità tecnologiche sia metafore del tempo, dell'energia e della pressione psicologica investiti nella costruzione della propria immagine online. Dietro ogni identità apparentemente perfetta si celano numerosi frammenti di lavoro invisibile.
+</p>
+
+<p>
+Il progetto invita infine a riflettere criticamente sul rapporto tra autenticità e performatività, interrogandosi sul modo in cui le tecnologie digitali stanno trasformando la nostra percezione dell'identità contemporanea.
+</p>
+`,
+        copySuccess: "Link del post copiato negli appunti!"
+    }
+};
+
+        let currentLang = 'en';
+        let currentSharedPost = null;
+
+        const postsData = [
+            { id: "v1", user: "pigniax_03", likes: 2541, caption: "seen/unseen", videoSrc: "hu.mp4", avatarSrc: "profilo hu.jpg" },
+            { id: "v2", user: "hilo_191", likes: 1890, caption: "what remains visible", videoSrc: "gao.mp4", avatarSrc: "profilo gao.jpg" },
+            { id: "v3", user: "ym.ueng_", likes: 4211, caption: "selective presence", videoSrc: "deng.mp4", avatarSrc: "profilo deng.jpg" }
+        ];
+
+        function init() {
+            updateLanguageUI();
+            renderFeed();
+
+            document.getElementById('aboutUsNav').onclick = () => {
+                document.getElementById('conceptModal').style.display = 'flex';
+            };
+
+            document.getElementById('langSwitcher').addEventListener('change', (e) => {
+                currentLang = e.target.value;
+                updateLanguageUI();
+                renderFeed(); 
+            });
+
+            const shareModal = document.getElementById('shareModal');
+            shareModal.onclick = (e) => { if(e.target === shareModal) shareModal.style.display = 'none'; };
+
+            const conceptModal = document.getElementById('conceptModal');
+            conceptModal.onclick = (e) => { if(e.target === conceptModal) conceptModal.style.display = 'none'; };
+
+            const echoModal = document.getElementById('echoModal');
+            echoModal.onclick = (e) => { if(e.target === echoModal) echoModal.style.display = 'none'; };
+
+            document.getElementById('conceptBtn').onclick = () => { shareModal.style.display = 'none'; conceptModal.style.display = 'flex'; };
+            document.getElementById('soulEchoBtn').onclick = () => { shareModal.style.display = 'none'; echoModal.style.display = 'flex'; };
+            document.getElementById('copyLinkBtn').onclick = () => { shareModal.style.display = 'none'; handleCopyAction(); };
+        }
+
+        function updateLanguageUI() {
+            const lang = i18n[currentLang];
+           document.getElementById('shareTitle').innerText = lang.shareTitle;
+           document.getElementById('copyLinkTxt').innerText = lang.copyLinkTxt;
+           document.getElementById('conceptBtnTxt').innerText = lang.conceptBtnTxt;
+           document.getElementById('soulEchoTxt').innerText = lang.soulEchoTxt;
+           document.getElementById('conceptTitle').innerText = lang.conceptTitle;
+           document.getElementById('conceptBody').innerHTML = lang.conceptBody;
+           document.getElementById('echoQuote').innerText = lang.echoQuote;
+           document.getElementById('echoAuthor').innerText = lang.echoAuthor;
+
+           document.getElementById('aboutUsNav').innerText = lang.aboutUs;
+           document.getElementById('closeConceptBtn').innerText = lang.returnBtn;
+           document.getElementById('closeEchoBtn').innerText = lang.returnBtn;
+           }
+           
+function handleCopyAction() {
+    if (!currentSharedPost) return;
+
+    const mockUrl = `https://www.socialmedia-art.com/${currentSharedPost.user}/p/${currentSharedPost.id}`;
+
+    const tempInput = document.createElement('textarea');
+    tempInput.value = mockUrl;
+    document.body.appendChild(tempInput);
+
+    tempInput.select();
+    document.execCommand('copy');
+
+    document.body.removeChild(tempInput);
+
+    showToast(i18n[currentLang].copySuccess);
+}
+
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMsg').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function renderFeed() {
+            const root = document.getElementById('feed-root');
+            root.innerHTML = '';
+            postsData.forEach(p => {
+                const firstLetter = p.user ? p.user.charAt(0).toUpperCase() : 'U';
+                const el = document.createElement('div');
+                el.className = 'post';
+                el.innerHTML = `
+                    <div class="post-header">
+                        <div class="header-left">
+                            <div class="profile-link">
+                                <img class="avatar" src="${p.avatarSrc}" onerror="this.src='https://placehold.co/100/111/00ffcc?text=${firstLetter}'" alt="${p.user}">
+                                <span class="username">${p.user}</span>
+                            </div>
+                            <span class="follow-btn" id="follow-${p.id}">• ${i18n[currentLang].follow}</span>
+                        </div>
+                    </div>
+                    <div class="media-box" id="media-${p.id}">
+                        <video id="video-el-${p.id}" class="feed-video" src="${p.videoSrc}" autoplay loop muted playsinline></video>
+                        <div class="video-error-overlay" id="err-overlay-${p.id}">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <h4 style="margin-top:10px; color:white;">${i18n[currentLang].errorTitle}</h4>
+                            <p>${i18n[currentLang].errorGuide}</p>
+                            <code>Location: netart/${p.videoSrc}</code>
+                        </div>
+                        <div class="video-controls" id="vol-btn-${p.id}"><svg id="vol-icon-${p.id}" viewBox="0 0 24 24"><path d="M3.63 3.63L2.22 5.05L7 9.83v4.35l4 4V13.8l5.46 5.46c-.45.33-.94.61-1.46.81v2.04c1.07-.26 2.06-.75 2.92-1.43l3.03 3.03l1.41-1.41L3.63 3.63zM9 14.17H5v-4h1.17l2.83 2.83v1.17zM15 12c0-1.1-.49-2.07-1.25-2.73l1.43-1.43C16.35 8.92 17 10.38 17 12c0 2.4-1.44 4.46-3.5 5.37v-2.15c.87-.71 1.5-1.78 1.5-3.22zm1.5-7.51c2.89 1.15 5 4 5 7.33a8.9 8.9 0 0 1-1.12 4.31l-1.47-1.47A6.98 6.98 0 0 0 19 11.82c0-2.36-1.52-4.37-3.64-5.12L16.5 4.49zM11 5.82v2.35L8.65 5.82L11 5.82z"/></svg></div>
+                        <div class="pop-heart"><svg width="80" height="80" viewBox="0 0 24 24" fill="#ff3040"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+                    </div>
+                    <div class="post-footer">
+                        <div class="action-btns">
+                            <button class="btn-svg like-btn" id="lbtn-${p.id}"><svg width="24" height="24" viewBox="0 0 24 24"><path class="icon-path" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+                            <button class="btn-svg share-trigger" id="sbtn-${p.id}"><svg width="24" height="24" viewBox="0 0 24 24"><path class="icon-path" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+                        </div>
+                        <div class="stats" id="stat-${p.id}">${p.likes} ${i18n[currentLang].likes}</div>
+                        <div class="caption"><b>${p.user}</b> ${p.caption}</div>
+                        <div class="comments-area" id="comm-list-${p.id}"></div>
+                        <div class="comment-bar">
+                            <input type="text" class="comment-input" placeholder="${i18n[currentLang].commentPlaceholder}" id="input-${p.id}">
+                            <span class="post-action" id="post-${p.id}">${i18n[currentLang].post}</span>
+                        </div>
+                    </div>
+                `;
+                root.appendChild(el);
+                setupLogic(p.id, el, p);
+            });
+        }
+
+        function setupLogic(id, el, postObject) {
+            const followBtn = el.querySelector(`#follow-${id}`);
+            const likeBtn = el.querySelector(`#lbtn-${id}`);
+            const stats = el.querySelector(`#stat-${id}`);
+            const media = el.querySelector(`#media-${id}`);
+            const popHeart = el.querySelector('.pop-heart');
+            const input = el.querySelector(`#input-${id}`);
+            const postBtn = el.querySelector(`#post-${id}`);
+            const commList = el.querySelector(`#comm-list-${id}`);
+            const videoEl = el.querySelector(`#video-el-${id}`);
+            const volBtn = el.querySelector(`#vol-btn-${id}`);
+            const errOverlay = el.querySelector(`#err-overlay-${id}`);
+
+            let isLiked = false;
+            let isFollowing = false;
+            let currentLikes = postsData.find(x => x.id === id).likes;
+
+            videoEl.onerror = () => { errOverlay.style.display = 'flex'; };
+
+            followBtn.onclick = () => {
+                isFollowing = !isFollowing;
+                followBtn.innerText = isFollowing ? `• ${i18n[currentLang].following}` : `• ${i18n[currentLang].follow}`;
+                followBtn.classList.toggle('following', isFollowing);
+            };
+
+            const toggleLike = () => {
+                isLiked = !isLiked;
+                if(isLiked) { currentLikes++; likeBtn.classList.add('liked'); }
+                else { currentLikes--; likeBtn.classList.remove('liked'); }
+                stats.innerText = `${currentLikes} ${i18n[currentLang].likes}`;
+            };
+            likeBtn.onclick = toggleLike;
+
+            media.ondblclick = () => {
+                if(!isLiked) toggleLike();
+                popHeart.classList.add('animate');
+                setTimeout(() => {
+                    popHeart.classList.remove('animate');
+                }, 800);
+            };
+
+            volBtn.onclick = () => { videoEl.muted = !videoEl.muted; };
+
+            input.oninput = (e) => { postBtn.classList.toggle('active', e.target.value.trim().length > 0); };
+
+            postBtn.onclick = () => {
+                if(input.value.trim() === "") return;
+                const comment = document.createElement('div');
+                comment.className = 'comment-row';
+                comment.innerHTML = `<b class="user-label">${i18n[currentLang].you}</b> ${input.value}`;
+                commList.appendChild(comment);
+                input.value = '';
+                postBtn.classList.remove('active');
+            };
+
+            el.querySelector('.share-trigger').onclick = () => {
+                currentSharedPost = postObject;
+                document.getElementById('shareModal').style.display = 'flex';
+            };
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
