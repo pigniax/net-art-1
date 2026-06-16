@@ -196,7 +196,7 @@
         .post-action { color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; opacity: 0.4; pointer-events: none; }
         .post-action.active { opacity: 1; pointer-events: auto; }
 
-        #shareModal, #echoModal, #conceptModal {
+        #shareModal, #echoModal, #conceptModal, #createModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 2000;
             display: none; justify-content: center; align-items: center;
@@ -347,9 +347,23 @@
                     <option value="it">IT</option>
                 </select>
             </div>
-            <div class="nav-right">
-                <div id="aboutUsNav" style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-dim); transition: 0.2s; margin-left: 10px;">About Us</div>
-            </div>
+           <div class="nav-right">
+
+    <button class="create-btn" id="createBtn">
+        +
+    </button>
+
+    <div id="aboutUsNav"
+         style="font-size:13px;
+                font-weight:600;
+                cursor:pointer;
+                color:var(--text-dim);
+                transition:0.2s;
+                margin-left:10px;">
+        About Us
+    </div>
+
+</div>
         </div>
     </nav>
 
@@ -392,6 +406,46 @@
             <button class="close-echo" id="closeEchoBtn" onclick="document.getElementById('echoModal').style.display='none'">RETURN TO FEED</button>
         </div>
     </div>
+    <div id="createModal">
+    <div class="modal-content">
+
+        <div class="modal-title">
+            Create a New Self
+        </div>
+
+       <div id="faceTrackingContainer"
+     style="
+        width:100%;
+        aspect-ratio:1/1;
+        border-radius:20px;
+        overflow:hidden;
+        position:relative;">
+
+    <iframe
+        src="facetracking.html"
+        style="
+            width:100%;
+            height:100%;
+            border:none;
+            background:black;">
+    </iframe>
+
+</div>
+        <p style="
+            margin-top:20px;
+            color:var(--text-dim);
+            font-size:13px;
+            line-height:1.6;">
+            Instead of uploading an image, your face becomes the site of construction.
+        </p>
+
+        <button class="close-echo"
+                id="closeCreateBtn">
+            RETURN
+        </button>
+
+    </div>
+</div>
 
     <div id="toastNotification" class="toast">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -646,19 +700,24 @@ Il progetto invita infine a riflettere criticamente sul rapporto tra autenticitÃ
             { id: "v3", user: "ym.ueng_", likes: 4211, caption: "selective presence", videoSrc: "deng.mp4", avatarSrc: "profilo deng.jpg" }
         ];
 
-        function init() {
-            updateLanguageUI();
-            renderFeed();
+     function init() {
 
-            document.getElementById('aboutUsNav').onclick = () => {
-                document.getElementById('conceptModal').style.display = 'flex';
-            };
+    updateLanguageUI();
+    renderFeed();
 
-            document.getElementById('langSwitcher').addEventListener('change', (e) => {
-                currentLang = e.target.value;
-                updateLanguageUI();
-                renderFeed(); 
-            });
+    document.getElementById('aboutUsNav').onclick = () => {
+        document.getElementById('conceptModal').style.display = 'flex';
+    };
+
+    document.getElementById('createBtn').onclick = () => {
+        document.getElementById('createModal').style.display = 'flex';
+    };
+
+    document.getElementById('langSwitcher').addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        updateLanguageUI();
+        renderFeed();
+    });
 
             const shareModal = document.getElementById('shareModal');
             shareModal.onclick = (e) => { if(e.target === shareModal) shareModal.style.display = 'none'; };
@@ -666,6 +725,17 @@ Il progetto invita infine a riflettere criticamente sul rapporto tra autenticitÃ
             const conceptModal = document.getElementById('conceptModal');
             conceptModal.onclick = (e) => { if(e.target === conceptModal) conceptModal.style.display = 'none'; };
 
+            const createModal = document.getElementById('createModal');
+
+   createModal.onclick = (e) => {
+    if (e.target === createModal) {
+        createModal.style.display = 'none';
+    }
+};
+
+document.getElementById('closeCreateBtn').onclick = () => {
+    createModal.style.display = 'none';
+};
             const echoModal = document.getElementById('echoModal');
             echoModal.onclick = (e) => { if(e.target === echoModal) echoModal.style.display = 'none'; };
 
@@ -778,7 +848,12 @@ function handleCopyAction() {
             let isFollowing = false;
             let currentLikes = postsData.find(x => x.id === id).likes;
 
-            videoEl.onerror = () => { errOverlay.style.display = 'flex'; };
+          videoEl.onerror = () => {
+
+    videoEl.style.display = 'none';
+
+    errOverlay.style.display = 'flex';
+};
 
             followBtn.onclick = () => {
                 isFollowing = !isFollowing;
@@ -822,7 +897,7 @@ function handleCopyAction() {
             };
         }
 
-        window.onload = init;
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
