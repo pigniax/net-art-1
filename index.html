@@ -113,31 +113,6 @@
             pointer-events: auto;
         }
 
-        .video-controls {
-            position: absolute;
-            bottom: 12px;
-            right: 12px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-        }
-        .video-controls:active {
-            transform: scale(0.9);
-        }
-        .video-controls svg {
-            width: 16px;
-            height: 16px;
-            fill: #ffffff;
-        }
-
         .video-error-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -695,9 +670,9 @@ Il progetto invita infine a riflettere criticamente sul rapporto tra autenticit�
         let currentSharedPost = null;
 
         const postsData = [
-            { id: "v1", user: "pigniax_03", likes: 2541, caption: "seen/unseen", videoSrc: "hu.mp4", avatarSrc: "profilo hu.jpg" },
-            { id: "v2", user: "hilo_191", likes: 1890, caption: "what remains visible", videoSrc: "gao.mp4", avatarSrc: "profilo gao.jpg" },
-            { id: "v3", user: "ym.ueng_", likes: 4211, caption: "selective presence", videoSrc: "deng.mp4", avatarSrc: "profilo deng.jpg" }
+            { id: "v1", user: "pigniax_03", instagram: "https://www.instagram.com/pigniax_03/", likes: 2541, caption: "seen/unseen", videoSrc: "hu.mp4", avatarSrc: "profilo hu.jpg" },
+            { id: "v2", user: "hilo_191", instagram: "https://www.instagram.com/hilo_191/", likes: 1890, caption: "what remains visible", videoSrc: "gao.mp4", avatarSrc: "profilo gao.jpg" },
+            { id: "v3", user: "ym.ueng_", instagram: "https://www.instagram.com/ym.ueng_/", likes: 4211, caption: "selective presence", videoSrc: "deng.mp4", avatarSrc: "profilo deng.jpg" }
         ];
 
      function init() {
@@ -793,22 +768,25 @@ function handleCopyAction() {
                 el.className = 'post';
                 el.innerHTML = `
                     <div class="post-header">
-                        <div class="header-left">
-                            <div class="profile-link">
-                                <img class="avatar" src="${p.avatarSrc}" onerror="this.src='https://placehold.co/100/111/00ffcc?text=${firstLetter}'" alt="${p.user}">
-                                <span class="username">${p.user}</span>
-                            </div>
-                            <span class="follow-btn" id="follow-${p.id}">• ${i18n[currentLang].follow}</span>
-                        </div>
+                       <div class="header-left">
+    <a class="profile-link"
+       href="${p.instagram}"
+       target="_blank">
+
+        <img class="avatar" src="${p.avatarSrc}" ...>
+
+        <span class="username">${p.user}</span>
+
+    </a>
+
+    <span class="follow-btn" id="follow-${p.id}">
+        • ${i18n[currentLang].follow}
+    </span>
+</div>
                     </div>
                     <div class="media-box" id="media-${p.id}">
                         <video id="video-el-${p.id}" class="feed-video" src="${p.videoSrc}" autoplay loop muted playsinline></video>
-                        <div class="video-error-overlay" id="err-overlay-${p.id}">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <h4 style="margin-top:10px; color:white;">${i18n[currentLang].errorTitle}</h4>
-                            <p>${i18n[currentLang].errorGuide}</p>
-                            <code>Location: netart/${p.videoSrc}</code>
-                        </div>
+                       
                         <div class="video-controls" id="vol-btn-${p.id}"><svg id="vol-icon-${p.id}" viewBox="0 0 24 24"><path d="M3.63 3.63L2.22 5.05L7 9.83v4.35l4 4V13.8l5.46 5.46c-.45.33-.94.61-1.46.81v2.04c1.07-.26 2.06-.75 2.92-1.43l3.03 3.03l1.41-1.41L3.63 3.63zM9 14.17H5v-4h1.17l2.83 2.83v1.17zM15 12c0-1.1-.49-2.07-1.25-2.73l1.43-1.43C16.35 8.92 17 10.38 17 12c0 2.4-1.44 4.46-3.5 5.37v-2.15c.87-.71 1.5-1.78 1.5-3.22zm1.5-7.51c2.89 1.15 5 4 5 7.33a8.9 8.9 0 0 1-1.12 4.31l-1.47-1.47A6.98 6.98 0 0 0 19 11.82c0-2.36-1.52-4.37-3.64-5.12L16.5 4.49zM11 5.82v2.35L8.65 5.82L11 5.82z"/></svg></div>
                         <div class="pop-heart"><svg width="80" height="80" viewBox="0 0 24 24" fill="#ff3040"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
                     </div>
@@ -841,7 +819,6 @@ function handleCopyAction() {
             const postBtn = el.querySelector(`#post-${id}`);
             const commList = el.querySelector(`#comm-list-${id}`);
             const videoEl = el.querySelector(`#video-el-${id}`);
-            const volBtn = el.querySelector(`#vol-btn-${id}`);
             const errOverlay = el.querySelector(`#err-overlay-${id}`);
 
             let isLiked = false;
@@ -877,7 +854,6 @@ function handleCopyAction() {
                 }, 800);
             };
 
-            volBtn.onclick = () => { videoEl.muted = !videoEl.muted; };
 
             input.oninput = (e) => { postBtn.classList.toggle('active', e.target.value.trim().length > 0); };
 
